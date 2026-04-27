@@ -54,3 +54,81 @@ src/main/java/com/example/keycloak_ldap_demo/
 ## Overview
 
 This demo shows how to combine Keycloak's OAuth2 capabilities with LDAP's enterprise user directory in a single Spring Boot application.
+
+## Architecture Diagram
+
+```mermaid
+flowchart TB
+    subgraph Client["Client Applications"]
+        Browser["Browser / Frontend"]
+        MobileApp["Mobile App"]
+        APIClient["API Client"]
+    end
+
+    subgraph Keycloak["Keycloak Server"]
+        KC["OAuth2/OIDC Provider"]
+        KCAdmin["Admin Console\n:9090"]
+    end
+
+    subgraph LDAP["LDAP Directory"]
+        LDAP["OpenLDAP\nUser Directory"]
+        Users["Users & Groups"]
+    end
+
+    subgraph SpringBoot["Spring Boot Application :8080"]
+        SecurityConfig["Security Config"]
+        
+        subgraph Auth["Authentication Layer"]
+            JWTFilter["JWT Filter"]
+            LdapAuth["LDAP Auth Provider"]
+            KeycloakAuth["Keycloak Auth"]
+        end
+        
+        subgraph Controllers["REST Controllers"]
+            AuthController["/api/auth/*"]
+            AdminController["/api/admin/*"]
+            SimpleController["/api/*"]
+        end
+        
+        subgraph Data["Data Layer"]
+            UserRepo["User Repository"]
+            DB["PostgreSQL Database"]
+        end
+    end
+
+    %% Authentication Flows
+    Browser -->|1. Login Request| AuthController
+    AuthController -->|2. Authenticate| LdapAuth
+    LdapAuth -->|3. Query Users| LDAP
+    LDAP -->|4. Return User Data| LdapAuth
+    LdapAuth -->|5. JWT Token| Browser
+    
+    Browser -->|6. API Request + JWT| JWTFilter
+    JWTFilter -->|7. Validate Token| KC
+    KC -->|8. Token Claims| JWTFilter
+    JWTFilter -->|9. Authorized| Controllers
+    
+    %% Keycloak to LDAP sync
+    KC -.->|User Federation| LDAP
+    
+    %% Database
+    UserRepo -->|Read/Write| DB
+    
+    %% Styling
+    classDef primary fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef secondary fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+    classDef database fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
+    classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    
+    class Browser,MobileApp,APIClient primary;
+    class KC,KCAdmin,LDAP external;
+    class SecurityConfig,AuthController,AdminController,SimpleController secondary;
+    class UserRepo,DB database;
+```
+
+### Flow Explanation
+
+| Step | Description |
+|------|-------------|
+| **1-5** | **LDAP Authentication Flow**: Client sends login → Spring Boot queries LDAP directory → Returns JWT token |
+| **6-9** | **Keycloak JWT Validation**: Client sends API request with JWT → Spring Boot validates token with Keycloak → Authorizes request |
