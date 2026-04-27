@@ -70,7 +70,7 @@ flowchart TB
         KCAdmin["Admin Console\n:9090"]
     end
 
-    subgraph LDAP["LDAP Directory"]
+    subgraph LDAPServer["LDAP Directory"]
         LDAP["OpenLDAP\nUser Directory"]
         Users["Users & Groups"]
     end
@@ -99,8 +99,8 @@ flowchart TB
     %% Authentication Flows
     Browser -->|1. Login Request| AuthController
     AuthController -->|2. Authenticate| LdapAuth
-    LdapAuth -->|3. Query Users| LDAP
-    LDAP -->|4. Return User Data| LdapAuth
+    LdapAuth -->|3. Query Users| LDAPServer
+    LDAPServer -->|4. Return User Data| LdapAuth
     LdapAuth -->|5. JWT Token| Browser
     
     Browser -->|6. API Request + JWT| JWTFilter
@@ -109,7 +109,7 @@ flowchart TB
     JWTFilter -->|9. Authorized| Controllers
     
     %% Keycloak to LDAP sync
-    KC -.->|User Federation| LDAP
+    KC -.->|User Federation| LDAPServer
     
     %% Database
     UserRepo -->|Read/Write| DB
@@ -121,7 +121,7 @@ flowchart TB
     classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px;
     
     class Browser,MobileApp,APIClient primary;
-    class KC,KCAdmin,LDAP external;
+    class KC,KCAdmin,LDAPServer external;
     class SecurityConfig,AuthController,AdminController,SimpleController secondary;
     class UserRepo,DB database;
 ```
