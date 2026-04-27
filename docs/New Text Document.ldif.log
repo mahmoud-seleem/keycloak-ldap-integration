@@ -1,0 +1,10 @@
+#!RESULT OK
+#!CONNECTION ldap://localhost:10389
+#!DATE 2026-04-27T00:37:05.398
+dn: uid=sara,ou=people,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Sara Seleem
+sn: Seleem
+uid: sara
+mail: sara@example.com
+userPassword: 123456
